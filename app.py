@@ -1,4 +1,4 @@
-# app.py ← Hugging Face Spaces ready, ZERO warnings, ultra-beautiful
+
 import streamlit as st
 import torch
 from PIL import Image
