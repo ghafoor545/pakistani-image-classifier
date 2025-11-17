@@ -1,4 +1,4 @@
-# ultimate_fix.py  → 100% WORKING, NO SYNTAX ERROR
+
 import torch
 import timm
 import torchvision.transforms as T
@@ -7,12 +7,12 @@ from torch.utils.data import DataLoader
 
 print("ULTIMATE TRAINING SHURU... 3-4 minute lagega")
 
-# Fresh model
+
 model = timm.create_model('vit_base_patch16_224', pretrained=True, num_classes=10)
 model.head = torch.nn.Linear(768, 10)
 model = model.cuda()
 
-# Strong augmentation
+
 transform = T.Compose([
     T.RandomResizedCrop(224),
     T.RandomHorizontalFlip(),
