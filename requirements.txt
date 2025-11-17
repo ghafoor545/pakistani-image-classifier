@@ -1,0 +1,21 @@
+# Core
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0          # optional but usually comes with torch
+
+# Vision Transformer & Models
+timm>=1.0.3                # latest timm (vit_base_patch16_224 etc.)
+
+# Streamlit Web App
+streamlit>=1.38.0
+
+# Image handling
+Pillow>=10.0.0
+
+# Training utilities
+tqdm>=4.66.0
+numpy>=1.24.0
+
+# Optional but recommended
+seaborn>=0.13.0            # if you ever plot confusion matrix
+matplotlib>=3.8.0
