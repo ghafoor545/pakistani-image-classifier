@@ -1,12 +1,14 @@
-# app.py  ← ZERO WARNINGS + ULTRA BEAUTIFUL (Nov 2025 FINAL)
+# app.py ← Hugging Face Spaces ready, ZERO warnings, ultra-beautiful
 import streamlit as st
 import torch
 from PIL import Image
 import json
-import os
+from pathlib import Path
+import requests
 from utils.transform import get_transform
 import timm
 
+# --- Page Config ---
 st.set_page_config(
     page_title="Pakistani AI Vision Pro",
     page_icon="🇵🇰",
@@ -14,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Beautiful CSS
+# --- Beautiful CSS ---
 st.markdown("""
 <style>
     .main {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;}
@@ -36,14 +38,37 @@ st.markdown("""
 st.markdown("<h1>🇵🇰 Pakistani AI Vision Pro</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#fff; font-size:1.4rem;'>Upload karo photo – AI batayega kya hai!</p>", unsafe_allow_html=True)
 
+# --- Model Loading ---
 @st.cache_resource
 def load_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    with open("model/refined_vit_class_info.json", "r") as f:
+
+    # Ensure model folder exists
+    Path("model").mkdir(exist_ok=True)
+    model_path = Path("model/refined_vit_model.pth")
+    class_info_path = Path("model/refined_vit_class_info.json")
+
+    # Download model if missing
+    if not model_path.exists():
+        url = "https://huggingface.co/Ghafoor545/refined-vit-model/resolve/main/refined_vit_model.pth"
+        with open(model_path, "wb") as f:
+            r = requests.get(url)
+            f.write(r.content)
+
+    # Download class info if missing
+    if not class_info_path.exists():
+        url = "https://huggingface.co/Ghafoor545/refined-vit-model/resolve/main/refined_vit_class_info.json"
+        with open(class_info_path, "wb") as f:
+            r = requests.get(url)
+            f.write(r.content)
+
+    # Load classes
+    with open(class_info_path, "r") as f:
         classes = json.load(f)["classes"]
-    
+
+    # Initialize and load model
     model = timm.create_model('vit_base_patch16_224', pretrained=False, num_classes=len(classes))
-    checkpoint = torch.load("model/refined_vit_model.pth", map_location=device)
+    checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'] if 'model_state_dict' in checkpoint else checkpoint)
     model.eval()
     model.to(device)
@@ -51,26 +76,27 @@ def load_model():
 
 model, class_names, device = load_model()
 
-# FIXED: No empty label warning
-uploaded_file = st.file_uploader("Upload your image here", 
-                                type=["jpg", "jpeg", "png", "webp", "bmp"], 
-                                label_visibility="collapsed")
+# --- File Uploader ---
+uploaded_file = st.file_uploader(
+    "Upload your image here",
+    type=["jpg", "jpeg", "png", "webp", "bmp"],
+    label_visibility="collapsed"
+)
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("<div class='result-card'>", unsafe_allow_html=True)
-        st.image(image, caption="Tumhari tasveer", width="stretch")  # ← FIXED (no warning)
+        st.image(image, caption="Tumhari tasveer", use_column_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
-    
+
     with col2:
         with st.spinner("AI soch raha hai..."):
             transform = get_transform()
             input_tensor = transform(image).unsqueeze(0).to(device)
-            
+
             with torch.no_grad():
                 output = model(input_tensor)
                 probs = torch.nn.functional.softmax(output[0], dim=0)
@@ -84,7 +110,7 @@ if uploaded_file:
         st.markdown(f"<div class='conf-bar'><div class='conf-fill' style='width:{confidence}%'></div></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Top-5
+        # --- Top-5 Predictions ---
         st.markdown("<h3 style='color:#fff; text-align:center;'>Top 5 Guesses</h3>", unsafe_allow_html=True)
         top5_prob, top5_idx = torch.topk(probs, 5)
         for i in range(5):
