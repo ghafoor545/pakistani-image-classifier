@@ -11,3 +11,4 @@ Deployed version of the refined ViT from `Refined_Training.ipynb`
 2. Install dependencies:
 ```bash
 pip install -r requirements.txt
+streamlit run app.py
